@@ -53,7 +53,8 @@ const generateImageForScene = async (
     const imageGenerationPrompt = `Gere uma imagem na proporção EXATA de ${aspectRatio}. Esta é a restrição de formato mais importante. 
 A imagem deve ser uma fotografia fotorrealista de alta qualidade usando a pessoa da imagem de referência (fornecida primeiro). MANTENHA A FIDELIDADE TOTAL DO ROSTO DA PESSOA.
 Coloque esta pessoa na seguinte cena: ${scene}.
-O estilo deve ser cinematográfico e vibrante, seguindo o tema da festa (fornecido na segunda imagem).`;
+O estilo deve ser cinematográfico e vibrante, seguindo o tema da festa (fornecido na segunda imagem).
+RESTRIÇÃO ADICIONAL: NÃO adicione chapéus, bonés ou óculos escuros na pessoa, a menos que a cena peça explicitamente por isso.`;
 
     const imageResponse = await ai.models.generateContent({
         model: 'gemini-2.5-flash-image',
@@ -95,7 +96,7 @@ export const generatePartyAssets = async (
     const personImagePart = await fileToGenerativePart(personImage);
     const flyerImagePart = await fileToGenerativePart(flyerImage);
 
-    const analysisPrompt = "Analise a pessoa na primeira imagem (a 'pessoa de referência') e o tema da festa no segundo. Crie uma `character_description` (string) fotorrealista e EXTREMAMENTE detalhada da pessoa. Foque em características únicas e imutáveis. Em seguida, crie um array chamado `assets` contendo 5 objetos. Cada objeto deve ter duas chaves: uma `scene` (string) descrevendo uma cena criativa para a festa, e um `dialogue` (string) correspondente para aquela cena. O diálogo deve ser curto, impactante, em Português (BR) e começar com '■'. A saída deve ser um objeto JSON com a chave `character_description` (string) e a chave `assets` (array de 5 objetos {scene, dialogue}).";
+    const analysisPrompt = "Analise a pessoa na primeira imagem (a 'pessoa de referência') e o tema da festa no segundo. Crie uma `character_description` (string) fotorrealista e EXTREMAMENTE detalhada da pessoa. Foque em características únicas e imutáveis (rosto, olhos, cabelo, tom de pele). IMPORTANTE: IGNORE adereços temporários como chapéus, óculos de sol ou itens que a pessoa esteja segurando. Em seguida, crie um array chamado `assets` contendo 5 objetos. Cada objeto deve ter duas chaves: uma `scene` (string) e um `dialogue` (string). Cada `scene` DEVE incluir explicitamente 'a pessoa de referência' como protagonista (ex: 'A pessoa de referência brindando com amigos...'). O diálogo deve ser curto, impactante, em Português (BR) e começar com '■'. A saída deve ser um objeto JSON com a chave `character_description` (string) e a chave `assets` (array de 5 objetos {scene, dialogue}).";
     const analysisResponse = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: { parts: [personImagePart, flyerImagePart, {text: analysisPrompt}] }

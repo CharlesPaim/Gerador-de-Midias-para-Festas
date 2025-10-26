@@ -1,10 +1,11 @@
-
 import React, { useState, useCallback } from 'react';
 import { ImageUploader } from './components/ImageUploader';
 import { AspectRatioSelector } from './components/AspectRatioSelector';
 import { ResultCard } from './components/ResultCard';
 import { generatePartyAssets, regeneratePartyImage } from './services/geminiService';
 import type { PartyAsset, AspectRatio } from './types';
+import { GalleryIcon } from './components/icons/GalleryIcon';
+import { ListIcon } from './components/icons/ListIcon';
 
 const App: React.FC = () => {
   const [personImage, setPersonImage] = useState<File | null>(null);
@@ -13,6 +14,8 @@ const App: React.FC = () => {
   const [generatedAssets, setGeneratedAssets] = useState<PartyAsset[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPrompts, setShowPrompts] = useState<boolean>(true);
+
 
   const handleGenerate = useCallback(async () => {
     if (!personImage || !flyerImage) {
@@ -41,6 +44,7 @@ const App: React.FC = () => {
     setGeneratedAssets([]);
     setError(null);
     setIsLoading(false);
+    setShowPrompts(true);
   };
 
   const handleRedo = useCallback(async (index: number) => {
@@ -140,14 +144,25 @@ const App: React.FC = () => {
         
         {generatedAssets.length > 0 && (
           <div className="space-y-8">
-            <h2 className="text-3xl font-bold text-center">Resultados Gerados</h2>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+             <div className="flex justify-between items-center px-2">
+                <h2 className="text-3xl font-bold">Resultados Gerados</h2>
+                <button
+                    onClick={() => setShowPrompts(!showPrompts)}
+                    className="flex items-center space-x-2 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+                    title={showPrompts ? "Ocultar Prompts (Visão de Galeria)" : "Exibir Prompts (Visão de Detalhes)"}
+                >
+                    {showPrompts ? <GalleryIcon className="w-5 h-5"/> : <ListIcon className="w-5 h-5"/>}
+                    <span>{showPrompts ? 'Galeria' : 'Detalhes'}</span>
+                </button>
+            </div>
+            <div className={`grid grid-cols-1 ${showPrompts ? 'lg:grid-cols-2' : 'sm:grid-cols-2 lg:grid-cols-3'} gap-8`}>
               {generatedAssets.map((asset, index) => (
                 <ResultCard
                   key={index}
                   asset={asset}
                   originalPersonImage={personImage}
                   onRedo={() => handleRedo(index)}
+                  showPrompts={showPrompts}
                 />
               ))}
             </div>
