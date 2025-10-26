@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { DownloadIcon } from './icons/DownloadIcon';
 import { CopyIcon } from './icons/CopyIcon';
@@ -82,10 +81,12 @@ export const ResultCard: React.FC<ResultCardProps> = ({ asset, originalPersonIma
       </div>
       <div className="p-4">
         <h4 className="text-lg font-bold mb-2 text-purple-300">Prompt de Vídeo (JSON)</h4>
-        <div className="relative bg-gray-900 rounded-md p-3 max-h-48 overflow-y-auto">
-          <pre className="text-sm text-gray-300 whitespace-pre-wrap break-all">
-            <code>{JSON.stringify(asset.videoPrompt, null, 2)}</code>
-          </pre>
+        <div className="relative bg-gray-900 rounded-md p-3">
+          <div className="max-h-40 overflow-y-auto">
+            <pre className="text-sm text-gray-300 whitespace-pre-wrap break-all">
+              <code>{JSON.stringify(asset.videoPrompt, null, 2)}</code>
+            </pre>
+          </div>
           <button onClick={handleTextCopy} className="absolute top-2 right-2 bg-gray-700 hover:bg-gray-600 p-2 rounded-md transition-colors" title="Copiar Prompt">
             {copyStatus === 'idle' ? <CopyIcon className="w-5 h-5" /> : <span className="text-xs font-bold text-green-400">Copiado!</span>}
           </button>

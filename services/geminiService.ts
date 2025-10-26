@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Modality } from "@google/genai";
 import type { PartyAsset, AspectRatio } from '../types';
 
@@ -96,26 +95,27 @@ export const generatePartyAssets = async (
     const personImagePart = await fileToGenerativePart(personImage);
     const flyerImagePart = await fileToGenerativePart(flyerImage);
 
-    const analysisPrompt = "Analise a pessoa na primeira imagem (a 'pessoa de referência') e o tema da festa no segundo. Crie uma `character_description` (string) que seja uma descrição fotorrealista EXTREMAMENTE detalhada da pessoa de referência. Foque em características únicas e imutáveis para garantir máxima fidelidade (formato do rosto, cor e formato dos olhos, formato do nariz, lábios, tom de pele, pintas ou cicatrizes visíveis, tipo/cor/estilo do cabelo, idade aproximada). Descreva também a roupa e a expressão na imagem de referência. Em seguida, crie 5 `scenes` (array de 5 strings) distintas e criativas para imagens promocionais que incorporem esta pessoa e o tema da festa. A saída deve ser um objeto JSON com chaves `character_description` e `scenes`.";
+    const analysisPrompt = "Analise a pessoa na primeira imagem (a 'pessoa de referência') e o tema da festa no segundo. Crie uma `character_description` (string) fotorrealista e EXTREMAMENTE detalhada da pessoa. Foque em características únicas e imutáveis. Em seguida, crie um array chamado `assets` contendo 5 objetos. Cada objeto deve ter duas chaves: uma `scene` (string) descrevendo uma cena criativa para a festa, e um `dialogue` (string) correspondente para aquela cena. O diálogo deve ser curto, impactante, em Português (BR) e começar com '■'. A saída deve ser um objeto JSON com a chave `character_description` (string) e a chave `assets` (array de 5 objetos {scene, dialogue}).";
     const analysisResponse = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: { parts: [personImagePart, flyerImagePart, {text: analysisPrompt}] }
     });
 
     const analysisResultText = cleanJsonString(analysisResponse.text);
-    const { character_description, scenes } = JSON.parse(analysisResultText);
+    const { character_description, assets } = JSON.parse(analysisResultText);
 
-    if (!character_description || !Array.isArray(scenes) || scenes.length !== 5) {
-        throw new Error("A análise inicial da IA não retornou o formato esperado.");
+    if (!character_description || !Array.isArray(assets) || assets.length !== 5 || !assets[0].scene || !assets[0].dialogue) {
+        throw new Error("A análise inicial da IA não retornou o formato esperado (esperava { character_description, assets: [{scene, dialogue}] }).");
     }
 
-    const assetPromises = scenes.map(async (scene: string) => {
+    const assetPromises = assets.map(async (asset: { scene: string, dialogue: string }) => {
       const videoPrompt = { ...videoPromptTemplate };
       videoPrompt.character_description = character_description;
-      videoPrompt.scene = scene;
+      videoPrompt.scene = asset.scene;
+      videoPrompt.dialogue = asset.dialogue; // <-- Diálogo dinâmico
       videoPrompt.aspect_ratio = aspectRatio;
       
-      const imageUrl = await generateImageForScene(personImagePart, flyerImagePart, scene, aspectRatio);
+      const imageUrl = await generateImageForScene(personImagePart, flyerImagePart, asset.scene, aspectRatio);
 
       return { imageUrl, videoPrompt };
     });
