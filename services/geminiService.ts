@@ -1,5 +1,5 @@
 
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Modality } from "@google/genai";
 import type { PartyAsset, AspectRatio } from '../types';
 
 if (!process.env.API_KEY) {
@@ -78,21 +78,39 @@ export const generatePartyAssets = async (
       // Here you could call Gemini again to fill other fields like dialogue, camera etc.
       // For simplicity, we are using the template directly.
 
-      // Step 3: Generate Image
-      const imageGenerationPrompt = `Gere uma fotografia fotorrealista de alta qualidade. A pessoa na imagem DEVE corresponder exatamente à seguinte descrição: [DESCRIÇÃO DA PESSOA: ${character_description}]. A cena é: [CENA: ${scene}]. O estilo deve ser cinematográfico, vibrante e fotorrealista, mantendo a identidade da pessoa descrita. Proporção da imagem: ${aspectRatio}.`;
-      
-      const imageResponse = await ai.models.generateImages({
-        model: 'imagen-4.0-generate-001',
-        prompt: imageGenerationPrompt,
-        config: {
-          numberOfImages: 1,
-          aspectRatio: aspectRatio,
-          outputMimeType: 'image/jpeg'
-        }
+      // Step 3: Generate Image (Usando o método Multimodal para alta fidelidade)
+      const imageGenerationPrompt = `Usando a pessoa da imagem de referência, gere uma fotografia fotorrealista de alta qualidade dela na seguinte cena: ${scene}. O estilo deve ser cinematográfico e vibrante, seguindo o tema da festa. A proporção da imagem deve ser ${aspectRatio}. MANTENHA A FIDELIDADE TOTAL DO ROSTO DA PESSOA.`;
+
+      // Use o modelo multimodal que aceita imagem + texto
+      const imageResponse = await ai.models.generateContent({
+          model: 'gemini-2.5-flash-image', // O modelo que entende imagem + texto
+          contents: {
+              parts: [
+                  personImagePart, // A imagem da pessoa
+                  flyerImagePart, // A imagem do flyer (para dar contexto do tema)
+                  { text: imageGenerationPrompt } // O prompt de texto
+              ]
+          },
+          config: {
+              responseModalities: [Modality.IMAGE], // A API requer um array com apenas Modality.IMAGE
+          },
       });
+
+      // Extrair a imagem da resposta
+      let imageUrl = '';
+      const parts = imageResponse.candidates?.[0]?.content?.parts;
+      if (parts) {
+        for (const part of parts) {
+            if (part.inlineData && part.inlineData.mimeType.startsWith('image/')) {
+                imageUrl = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+                break;
+            }
+        }
+      }
       
-      const base64ImageBytes = imageResponse.generatedImages[0].image.imageBytes;
-      const imageUrl = `data:image/jpeg;base64,${base64ImageBytes}`;
+      if (!imageUrl) {
+          throw new Error("Nenhuma imagem foi gerada pelo modelo multimodal.");
+      }
 
       return { imageUrl, videoPrompt };
     });
