@@ -1,0 +1,7 @@
+{
+  "name": "Gerador de Mídia para Festas",
+  "description": "Faça o upload da foto de uma pessoa e o folder de uma festa para gerar imagens promocionais e prompts de vídeo com IA.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
