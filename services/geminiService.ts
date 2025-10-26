@@ -55,7 +55,7 @@ export const generatePartyAssets = async (
     const flyerImagePart = await fileToGenerativePart(flyerImage);
 
     // Step 1: Analyze person and flyer to get character description and scenes
-    const analysisPrompt = "Analise a pessoa na primeira imagem e o tema da festa no segundo. Crie uma `character_description` extremamente detalhada e fotorrealista da pessoa, focando em características únicas para garantir máxima fidelidade. Inclua formato do rosto, tipo e cor do cabelo, cor dos olhos, tom de pele, idade aproximada, expressão e roupas. Em seguida, crie 5 `scenes` distintas e criativas para imagens promocionais que incorporem esta pessoa e o tema da festa. A saída deve ser um objeto JSON com uma chave `character_description` (string) e uma chave `scenes` (array de 5 strings).";
+    const analysisPrompt = "Analise a pessoa na primeira imagem (a 'pessoa de referência') e o tema da festa no segundo. Crie uma `character_description` (string) que seja uma descrição fotorrealista EXTREMAMENTE detalhada da pessoa de referência. Foque em características únicas e imutáveis para garantir máxima fidelidade (formato do rosto, cor e formato dos olhos, formato do nariz, lábios, tom de pele, pintas ou cicatrizes visíveis, tipo/cor/estilo do cabelo, idade aproximada). Descreva também a roupa e a expressão na imagem de referência. Em seguida, crie 5 `scenes` (array de 5 strings) distintas e criativas para imagens promocionais que incorporem esta pessoa e o tema da festa. A saída deve ser um objeto JSON com chaves `character_description` e `scenes`.";
     const analysisResponse = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: { parts: [personImagePart, flyerImagePart, {text: analysisPrompt}] }
@@ -79,7 +79,7 @@ export const generatePartyAssets = async (
       // For simplicity, we are using the template directly.
 
       // Step 3: Generate Image
-      const imageGenerationPrompt = `Uma fotografia fotorrealista de alta qualidade de uma pessoa: ${character_description}. A pessoa está na seguinte cena: ${scene}. O estilo é cinematográfico e vibrante. A proporção da imagem deve ser ${aspectRatio}.`;
+      const imageGenerationPrompt = `Gere uma fotografia fotorrealista de alta qualidade. A pessoa na imagem DEVE corresponder exatamente à seguinte descrição: [DESCRIÇÃO DA PESSOA: ${character_description}]. A cena é: [CENA: ${scene}]. O estilo deve ser cinematográfico, vibrante e fotorrealista, mantendo a identidade da pessoa descrita. Proporção da imagem: ${aspectRatio}.`;
       
       const imageResponse = await ai.models.generateImages({
         model: 'imagen-4.0-generate-001',
