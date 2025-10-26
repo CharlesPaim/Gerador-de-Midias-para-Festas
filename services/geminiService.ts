@@ -45,6 +45,48 @@ const videoPromptTemplate = {
   frame_rate: "24fps"
 };
 
+const generateImageForScene = async (
+    personImagePart: any,
+    flyerImagePart: any,
+    scene: string,
+    aspectRatio: AspectRatio
+): Promise<string> => {
+    const imageGenerationPrompt = `Gere uma imagem na proporção EXATA de ${aspectRatio}. Esta é a restrição de formato mais importante. 
+A imagem deve ser uma fotografia fotorrealista de alta qualidade usando a pessoa da imagem de referência (fornecida primeiro). MANTENHA A FIDELIDADE TOTAL DO ROSTO DA PESSOA.
+Coloque esta pessoa na seguinte cena: ${scene}.
+O estilo deve ser cinematográfico e vibrante, seguindo o tema da festa (fornecido na segunda imagem).`;
+
+    const imageResponse = await ai.models.generateContent({
+        model: 'gemini-2.5-flash-image',
+        contents: {
+            parts: [
+                personImagePart,
+                flyerImagePart,
+                { text: imageGenerationPrompt }
+            ]
+        },
+        config: {
+            responseModalities: [Modality.IMAGE],
+        },
+    });
+
+    let imageUrl = '';
+    const parts = imageResponse.candidates?.[0]?.content?.parts;
+    if (parts) {
+        for (const part of parts) {
+            if (part.inlineData && part.inlineData.mimeType.startsWith('image/')) {
+                imageUrl = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+                break;
+            }
+        }
+    }
+
+    if (!imageUrl) {
+        throw new Error("Nenhuma imagem foi gerada pelo modelo multimodal.");
+    }
+    return imageUrl;
+};
+
 export const generatePartyAssets = async (
   personImage: File,
   flyerImage: File,
@@ -54,7 +96,6 @@ export const generatePartyAssets = async (
     const personImagePart = await fileToGenerativePart(personImage);
     const flyerImagePart = await fileToGenerativePart(flyerImage);
 
-    // Step 1: Analyze person and flyer to get character description and scenes
     const analysisPrompt = "Analise a pessoa na primeira imagem (a 'pessoa de referência') e o tema da festa no segundo. Crie uma `character_description` (string) que seja uma descrição fotorrealista EXTREMAMENTE detalhada da pessoa de referência. Foque em características únicas e imutáveis para garantir máxima fidelidade (formato do rosto, cor e formato dos olhos, formato do nariz, lábios, tom de pele, pintas ou cicatrizes visíveis, tipo/cor/estilo do cabelo, idade aproximada). Descreva também a roupa e a expressão na imagem de referência. Em seguida, crie 5 `scenes` (array de 5 strings) distintas e criativas para imagens promocionais que incorporem esta pessoa e o tema da festa. A saída deve ser um objeto JSON com chaves `character_description` e `scenes`.";
     const analysisResponse = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
@@ -68,52 +109,13 @@ export const generatePartyAssets = async (
         throw new Error("A análise inicial da IA não retornou o formato esperado.");
     }
 
-    // Step 2 & 3: Generate video prompts and images in parallel
     const assetPromises = scenes.map(async (scene: string) => {
-      // Step 2: Generate Video Prompt (using the template)
       const videoPrompt = { ...videoPromptTemplate };
       videoPrompt.character_description = character_description;
       videoPrompt.scene = scene;
       videoPrompt.aspect_ratio = aspectRatio;
-      // Here you could call Gemini again to fill other fields like dialogue, camera etc.
-      // For simplicity, we are using the template directly.
-
-      // Step 3: Generate Image (Usando o método Multimodal para alta fidelidade)
-      const imageGenerationPrompt = `Gere uma imagem na proporção EXATA de ${aspectRatio}. Esta é a restrição de formato mais importante. 
-A imagem deve ser uma fotografia fotorrealista de alta qualidade usando a pessoa da imagem de referência (fornecida primeiro). MANTENHA A FIDELIDADE TOTAL DO ROSTO DA PESSOA.
-Coloque esta pessoa na seguinte cena: ${scene}.
-O estilo deve ser cinematográfico e vibrante, seguindo o tema da festa (fornecido na segunda imagem).`;
-
-      // Use o modelo multimodal que aceita imagem + texto
-      const imageResponse = await ai.models.generateContent({
-          model: 'gemini-2.5-flash-image', // O modelo que entende imagem + texto
-          contents: {
-              parts: [
-                  personImagePart, // A imagem da pessoa
-                  flyerImagePart, // A imagem do flyer (para dar contexto do tema)
-                  { text: imageGenerationPrompt } // O prompt de texto
-              ]
-          },
-          config: {
-              responseModalities: [Modality.IMAGE], // A API requer um array com apenas Modality.IMAGE
-          },
-      });
-
-      // Extrair a imagem da resposta
-      let imageUrl = '';
-      const parts = imageResponse.candidates?.[0]?.content?.parts;
-      if (parts) {
-        for (const part of parts) {
-            if (part.inlineData && part.inlineData.mimeType.startsWith('image/')) {
-                imageUrl = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-                break;
-            }
-        }
-      }
       
-      if (!imageUrl) {
-          throw new Error("Nenhuma imagem foi gerada pelo modelo multimodal.");
-      }
+      const imageUrl = await generateImageForScene(personImagePart, flyerImagePart, scene, aspectRatio);
 
       return { imageUrl, videoPrompt };
     });
@@ -123,4 +125,21 @@ O estilo deve ser cinematográfico e vibrante, seguindo o tema da festa (forneci
     console.error("Error generating party assets:", error);
     throw new Error("Falha ao gerar os recursos. Verifique o console para mais detalhes.");
   }
+};
+
+export const regeneratePartyImage = async (
+  personImage: File,
+  flyerImage: File,
+  scene: string,
+  aspectRatio: AspectRatio
+): Promise<string> => {
+    try {
+        const personImagePart = await fileToGenerativePart(personImage);
+        const flyerImagePart = await fileToGenerativePart(flyerImage);
+        
+        return await generateImageForScene(personImagePart, flyerImagePart, scene, aspectRatio);
+    } catch (error) {
+        console.error("Error regenerating party image:", error);
+        throw new Error("Falha ao refazer a imagem. Verifique o console para mais detalhes.");
+    }
 };

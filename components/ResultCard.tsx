@@ -2,14 +2,16 @@
 import React, { useState, useMemo } from 'react';
 import { DownloadIcon } from './icons/DownloadIcon';
 import { CopyIcon } from './icons/CopyIcon';
+import { RedoIcon } from './icons/RedoIcon';
 import type { PartyAsset } from '../types';
 
 interface ResultCardProps {
   asset: PartyAsset;
   originalPersonImage: File | null;
+  onRedo: () => void;
 }
 
-export const ResultCard: React.FC<ResultCardProps> = ({ asset, originalPersonImage }) => {
+export const ResultCard: React.FC<ResultCardProps> = ({ asset, originalPersonImage, onRedo }) => {
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied'>('idle');
   const [imageCopyStatus, setImageCopyStatus] = useState<'idle' | 'copied'>('idle');
   const [showOriginal, setShowOriginal] = useState(false);
@@ -54,19 +56,27 @@ export const ResultCard: React.FC<ResultCardProps> = ({ asset, originalPersonIma
         <img
             src={showOriginal ? originalImageUrl : asset.imageUrl}
             alt="Generated content"
-            className="w-full h-auto object-contain aspect-video bg-black"
+            className={`w-full h-auto object-contain aspect-video bg-black transition-opacity duration-300 ${asset.isRegenerating ? 'opacity-30' : 'opacity-100'}`}
         />
+        {asset.isRegenerating && (
+           <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
+             <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-purple-400"></div>
+           </div>
+        )}
         <div className="absolute top-2 right-2 flex space-x-2">
             {originalImageUrl && (
-                 <button onClick={() => setShowOriginal(!showOriginal)} className="bg-black bg-opacity-50 hover:bg-opacity-75 text-white p-2 rounded-full transition-colors" title={showOriginal ? "Ver Imagem Gerada" : "Ver Imagem Original"}>
+                 <button onClick={() => setShowOriginal(!showOriginal)} disabled={asset.isRegenerating} className="bg-black bg-opacity-50 hover:bg-opacity-75 text-white p-2 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title={showOriginal ? "Ver Imagem Gerada" : "Ver Imagem Original"}>
                      <span className="text-xs font-bold">{showOriginal ? "Ver Gerada" : "Ver Original"}</span>
                  </button>
             )}
-            <button onClick={handleImageCopy} className="bg-black bg-opacity-50 hover:bg-opacity-75 text-white p-2 rounded-full transition-colors" title="Copiar Imagem">
+            <button onClick={handleImageCopy} disabled={asset.isRegenerating} className="bg-black bg-opacity-50 hover:bg-opacity-75 text-white p-2 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Copiar Imagem">
                  {imageCopyStatus === 'idle' ? <CopyIcon className="w-6 h-6" /> : <span className="text-xs font-bold text-green-400">Copiada!</span>}
             </button>
-            <button onClick={handleDownload} className="bg-black bg-opacity-50 hover:bg-opacity-75 text-white p-2 rounded-full transition-colors" title="Baixar Imagem">
+            <button onClick={handleDownload} disabled={asset.isRegenerating} className="bg-black bg-opacity-50 hover:bg-opacity-75 text-white p-2 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Baixar Imagem">
                 <DownloadIcon className="w-6 h-6" />
+            </button>
+            <button onClick={onRedo} disabled={asset.isRegenerating} className="bg-black bg-opacity-50 hover:bg-opacity-75 text-white p-2 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Refazer Imagem">
+                <RedoIcon className="w-6 h-6" />
             </button>
         </div>
       </div>

@@ -3,7 +3,7 @@ import React, { useState, useCallback } from 'react';
 import { ImageUploader } from './components/ImageUploader';
 import { AspectRatioSelector } from './components/AspectRatioSelector';
 import { ResultCard } from './components/ResultCard';
-import { generatePartyAssets } from './services/geminiService';
+import { generatePartyAssets, regeneratePartyImage } from './services/geminiService';
 import type { PartyAsset, AspectRatio } from './types';
 
 const App: React.FC = () => {
@@ -42,6 +42,44 @@ const App: React.FC = () => {
     setError(null);
     setIsLoading(false);
   };
+
+  const handleRedo = useCallback(async (index: number) => {
+    if (!personImage || !flyerImage) {
+      setError('Imagens originais não encontradas para refazer.');
+      return;
+    }
+
+    const assetToRedo = generatedAssets[index];
+    if (!assetToRedo) return;
+
+    setGeneratedAssets(currentAssets =>
+      currentAssets.map((asset, i) =>
+        i === index ? { ...asset, isRegenerating: true } : asset
+      )
+    );
+    setError(null);
+
+    try {
+      const scene = assetToRedo.videoPrompt.scene;
+      const newImageUrl = await regeneratePartyImage(personImage, flyerImage, scene, aspectRatio);
+
+      setGeneratedAssets(currentAssets =>
+        currentAssets.map((asset, i) =>
+          i === index
+            ? { ...asset, imageUrl: newImageUrl, isRegenerating: false }
+            : asset
+        )
+      );
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? `Falha ao refazer: ${err.message}` : 'Ocorreu um erro desconhecido ao refazer a imagem.');
+      setGeneratedAssets(currentAssets =>
+        currentAssets.map((asset, i) =>
+          i === index ? { ...asset, isRegenerating: false } : asset
+        )
+      );
+    }
+  }, [personImage, flyerImage, aspectRatio, generatedAssets]);
 
   const canGenerate = personImage && flyerImage && !isLoading;
 
@@ -105,7 +143,12 @@ const App: React.FC = () => {
             <h2 className="text-3xl font-bold text-center">Resultados Gerados</h2>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {generatedAssets.map((asset, index) => (
-                <ResultCard key={index} asset={asset} originalPersonImage={personImage} />
+                <ResultCard
+                  key={index}
+                  asset={asset}
+                  originalPersonImage={personImage}
+                  onRedo={() => handleRedo(index)}
+                />
               ))}
             </div>
              <div className="text-center mt-8">
