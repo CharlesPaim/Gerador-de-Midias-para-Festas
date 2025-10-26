@@ -79,7 +79,10 @@ export const generatePartyAssets = async (
       // For simplicity, we are using the template directly.
 
       // Step 3: Generate Image (Usando o método Multimodal para alta fidelidade)
-      const imageGenerationPrompt = `Usando a pessoa da imagem de referência, gere uma fotografia fotorrealista de alta qualidade dela na seguinte cena: ${scene}. O estilo deve ser cinematográfico e vibrante, seguindo o tema da festa. A proporção da imagem deve ser ${aspectRatio}. MANTENHA A FIDELIDADE TOTAL DO ROSTO DA PESSOA.`;
+      const imageGenerationPrompt = `Gere uma imagem na proporção EXATA de ${aspectRatio}. Esta é a restrição de formato mais importante. 
+A imagem deve ser uma fotografia fotorrealista de alta qualidade usando a pessoa da imagem de referência (fornecida primeiro). MANTENHA A FIDELIDADE TOTAL DO ROSTO DA PESSOA.
+Coloque esta pessoa na seguinte cena: ${scene}.
+O estilo deve ser cinematográfico e vibrante, seguindo o tema da festa (fornecido na segunda imagem).`;
 
       // Use o modelo multimodal que aceita imagem + texto
       const imageResponse = await ai.models.generateContent({
