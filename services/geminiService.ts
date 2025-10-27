@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Modality } from "@google/genai";
 import type { PartyAsset, AspectRatio } from '../types';
 
@@ -144,4 +145,30 @@ export const regeneratePartyImage = async (
         console.error("Error regenerating party image:", error);
         throw new Error("Falha ao refazer a imagem. Verifique o console para mais detalhes.");
     }
+};
+
+export const generateDescriptivePrompt = (videoPrompt: Record<string, any>): string => {
+  const { character_description, scene, style, lighting, aspect_ratio, negative_prompts } = videoPrompt;
+
+  // Mapeia aspect_ratio para descrição
+  let aspectRatioDesc = '';
+  switch (aspect_ratio) {
+    case '1:1': aspectRatioDesc = 'formato quadrado (proporção 1:1)'; break;
+    case '16:9': aspectRatioDesc = 'formato paisagem (proporção 16:9)'; break;
+    case '9:16': aspectRatioDesc = 'formato vertical (proporção 9:16)'; break;
+    default: aspectRatioDesc = `proporção ${aspect_ratio}`;
+  }
+
+  // Monta a string descritiva
+  let prompt = `Uma fotografia ${style || 'cinematográfica, realista'}, em ${aspectRatioDesc}.\n\n`;
+  prompt += `A cena mostra: ${scene}.\n\n`;
+  prompt += `Descrição detalhada da pessoa: ${character_description}.\n\n`;
+  if (lighting) {
+    prompt += `Iluminação: ${lighting}.\n\n`;
+  }
+  if (negative_prompts) {
+    prompt += `Evite: ${negative_prompts}.`;
+  }
+
+  return prompt.trim();
 };

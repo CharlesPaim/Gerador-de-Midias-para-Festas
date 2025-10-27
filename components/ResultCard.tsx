@@ -1,9 +1,11 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { DownloadIcon } from './icons/DownloadIcon';
 import { CopyIcon } from './icons/CopyIcon';
 import { RedoIcon } from './icons/RedoIcon';
 import { ShareIcon } from './icons/ShareIcon';
 import type { PartyAsset, AspectRatio } from '../types';
+import { generateDescriptivePrompt } from '../services/geminiService';
 
 interface ResultCardProps {
   asset: PartyAsset;
@@ -16,6 +18,7 @@ interface ResultCardProps {
 export const ResultCard: React.FC<ResultCardProps> = ({ asset, originalPersonImage, onRedo, showPrompts, onOpenModal }) => {
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied'>('idle');
   const [imageCopyStatus, setImageCopyStatus] = useState<'idle' | 'copied'>('idle');
+  const [textPromptCopyStatus, setTextPromptCopyStatus] = useState<'idle' | 'copied'>('idle');
   const [showOriginal, setShowOriginal] = useState(false);
   const [canShare, setCanShare] = useState(false);
   const originalImageUrl = useMemo(() => originalPersonImage ? URL.createObjectURL(originalPersonImage) : null, [originalPersonImage]);
@@ -98,6 +101,14 @@ export const ResultCard: React.FC<ResultCardProps> = ({ asset, originalPersonIma
     onRedo();
   }
 
+  const handleTextPromptCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const descriptivePrompt = generateDescriptivePrompt(asset.videoPrompt);
+    navigator.clipboard.writeText(descriptivePrompt);
+    setTextPromptCopyStatus('copied');
+    setTimeout(() => setTextPromptCopyStatus('idle'), 2000);
+  };
+
   const handleToggleOriginalClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowOriginal(!showOriginal);
@@ -139,6 +150,12 @@ export const ResultCard: React.FC<ResultCardProps> = ({ asset, originalPersonIma
             </button>
             <button onClick={handleImageCopy} disabled={asset.isRegenerating} className="bg-black bg-opacity-50 hover:bg-opacity-75 text-white p-2 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Copiar Imagem">
                 {imageCopyStatus === 'idle' ? <CopyIcon className="w-6 h-6" /> : <span className="text-xs font-bold text-green-400">Copiada!</span>}
+            </button>
+            <button onClick={handleTextPromptCopy} disabled={asset.isRegenerating} className="bg-black bg-opacity-50 hover:bg-opacity-75 text-white p-2 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Copiar Prompt Descritivo (Texto)">
+              {textPromptCopyStatus === 'idle'
+               ? <CopyIcon className="w-6 h-6" />
+               : <span className="text-xs font-bold text-green-400">Copiado!</span>
+              }
             </button>
             <button onClick={handleRedoClick} disabled={asset.isRegenerating} className="bg-black bg-opacity-50 hover:bg-opacity-75 text-white p-2 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Refazer Imagem">
                 <RedoIcon className="w-6 h-6" />
