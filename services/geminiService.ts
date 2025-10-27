@@ -50,12 +50,12 @@ const generateImageForScene = async (
     scene: string,
     aspectRatio: AspectRatio
 ): Promise<string> => {
-    const imageGenerationPrompt = `Gere uma imagem na proporção EXATA de ${aspectRatio}. Esta é a restrição de formato mais importante. 
+    const imageGenerationPrompt = `Gere uma imagem na proporção EXATA de ${aspectRatio}. Esta é a restrição de formato mais importante.
 A imagem deve ser uma fotografia fotorrealista de alta qualidade usando a pessoa da imagem de referência (fornecida primeiro). MANTENHA A FIDELIDADE TOTAL DO ROSTO DA PESSOA.
 O enquadramento deve ser um plano médio (da cintura para cima) ou um close-up. O rosto da pessoa deve estar claramente visível e virado para a câmera.
 Coloque esta pessoa na seguinte cena: ${scene}.
 O estilo deve ser cinematográfico e vibrante, seguindo o tema da festa (fornecido na segunda imagem).
-RESTRIÇÃO ADICIONAL: NÃO adicione chapéus, bonés ou óculos escuros na pessoa, a menos que a cena peça explicitamente por isso.`;
+RESTRIÇÃO ADICIONAL: NÃO adicione NENHUM adereço extra na pessoa (como chapéus, bonés, óculos escuros, colares de flores, etc.), a menos que a cena peça explicitamente por isso.`;
 
     const imageResponse = await ai.models.generateContent({
         model: 'gemini-2.5-flash-image',

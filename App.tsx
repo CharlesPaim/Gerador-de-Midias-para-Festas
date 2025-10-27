@@ -1,7 +1,8 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { ImageUploader } from './components/ImageUploader';
 import { AspectRatioSelector } from './components/AspectRatioSelector';
 import { ResultCard } from './components/ResultCard';
+import { ImageModal } from './components/ImageModal';
 import { generatePartyAssets, regeneratePartyImage } from './services/geminiService';
 import type { PartyAsset, AspectRatio } from './types';
 import { GalleryIcon } from './components/icons/GalleryIcon';
@@ -15,6 +16,7 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [showPrompts, setShowPrompts] = useState<boolean>(true);
+  const [currentModalIndex, setCurrentModalIndex] = useState<number | null>(null);
 
 
   const handleGenerate = useCallback(async () => {
@@ -45,6 +47,7 @@ const App: React.FC = () => {
     setError(null);
     setIsLoading(false);
     setShowPrompts(true);
+    setCurrentModalIndex(null);
   };
 
   const handleRedo = useCallback(async (index: number) => {
@@ -85,6 +88,14 @@ const App: React.FC = () => {
     }
   }, [personImage, flyerImage, aspectRatio, generatedAssets]);
 
+  const handleModalNavigation = (direction: 'prev' | 'next') => {
+    if (currentModalIndex === null) return;
+    const newIndex = direction === 'next' ? currentModalIndex + 1 : currentModalIndex - 1;
+    if (newIndex >= 0 && newIndex < generatedAssets.length) {
+      setCurrentModalIndex(newIndex);
+    }
+  };
+  
   const canGenerate = personImage && flyerImage && !isLoading;
 
   return (
@@ -163,6 +174,7 @@ const App: React.FC = () => {
                   originalPersonImage={personImage}
                   onRedo={() => handleRedo(index)}
                   showPrompts={showPrompts}
+                  onOpenModal={() => setCurrentModalIndex(index)}
                 />
               ))}
             </div>
@@ -177,6 +189,16 @@ const App: React.FC = () => {
           </div>
         )}
       </main>
+
+      {currentModalIndex !== null && (
+        <ImageModal 
+          imageUrl={generatedAssets[currentModalIndex].imageUrl}
+          onClose={() => setCurrentModalIndex(null)}
+          onNavigate={handleModalNavigation}
+          currentIndex={currentModalIndex}
+          totalImages={generatedAssets.length}
+        />
+      )}
     </div>
   );
 };
