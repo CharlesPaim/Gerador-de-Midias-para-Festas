@@ -1,0 +1,22 @@
+{
+  "short_name": "Festa Mídia",
+  "name": "Gerador de Mídia para Festas",
+  "description": "Faça o upload da foto de uma pessoa e o folder de uma festa para gerar imagens promocionais e prompts de vídeo com IA.",
+  "icons": [
+    {
+      "src": "/icons/icon-192.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/icons/icon-512.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#8B5CF6",
+  "background_color": "#111827",
+  "scope": "/"
+}

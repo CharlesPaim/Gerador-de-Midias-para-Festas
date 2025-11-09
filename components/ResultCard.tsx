@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { DownloadIcon } from './icons/DownloadIcon';
 import { CopyIcon } from './icons/CopyIcon';
@@ -24,7 +23,6 @@ export const ResultCard: React.FC<ResultCardProps> = ({ asset, originalPersonIma
   const originalImageUrl = useMemo(() => originalPersonImage ? URL.createObjectURL(originalPersonImage) : null, [originalPersonImage]);
 
   useEffect(() => {
-    // A API Web Share com arquivos não é universalmente suportada. Verifique se ela existe.
     if (navigator.share && typeof navigator.canShare === 'function') {
       try {
           const dummyFile = new File(["dummy"], "dummy.png", { type: "image/png" });
@@ -32,13 +30,11 @@ export const ResultCard: React.FC<ResultCardProps> = ({ asset, originalPersonIma
               setCanShare(true);
           }
       } catch (e) {
-          // Se o construtor de File não for suportado, podemos assumir que o compartilhamento de arquivos também não é.
           console.warn('Falha na verificação de compartilhamento de arquivos.', e);
           setCanShare(false);
       }
     }
   }, []);
-
 
   const handleTextCopy = () => {
     navigator.clipboard.writeText(JSON.stringify(asset.videoPrompt, null, 2));
@@ -60,7 +56,6 @@ export const ResultCard: React.FC<ResultCardProps> = ({ asset, originalPersonIma
         });
     } catch (err) {
         console.error("Falha ao compartilhar a imagem: ", err);
-        // Evita alerta no cancelamento do usuário
         if ((err as Error).name !== 'AbortError') {
           alert("Não foi possível compartilhar a imagem.");
         }
@@ -163,17 +158,19 @@ export const ResultCard: React.FC<ResultCardProps> = ({ asset, originalPersonIma
         </div>
       </div>
       {showPrompts && (
-        <div className="p-4">
-          <h4 className="text-lg font-bold mb-2 text-purple-300">Prompt de Vídeo (JSON)</h4>
-          <div className="relative bg-gray-900 rounded-md p-3">
-            <div className="max-h-40 overflow-y-auto">
-              <pre className="text-sm text-gray-300 whitespace-pre-wrap break-all">
-                <code>{JSON.stringify(asset.videoPrompt, null, 2)}</code>
-              </pre>
+        <div className="p-4 flex-grow flex flex-col">
+          <div className="mt-auto">
+            <h4 className="text-lg font-bold mb-2 text-purple-300">Prompt de Vídeo (JSON)</h4>
+            <div className="relative bg-gray-900 rounded-md p-3">
+              <div className="max-h-40 overflow-y-auto">
+                <pre className="text-sm text-gray-300 whitespace-pre-wrap break-all">
+                  <code>{JSON.stringify(asset.videoPrompt, null, 2)}</code>
+                </pre>
+              </div>
+              <button onClick={handleTextCopy} className="absolute top-2 right-2 bg-gray-700 hover:bg-gray-600 p-2 rounded-md transition-colors" title="Copiar Prompt">
+                {copyStatus === 'idle' ? <CopyIcon className="w-5 h-5" /> : <span className="text-xs font-bold text-green-400">Copiado!</span>}
+              </button>
             </div>
-            <button onClick={handleTextCopy} className="absolute top-2 right-2 bg-gray-700 hover:bg-gray-600 p-2 rounded-md transition-colors" title="Copiar Prompt">
-              {copyStatus === 'idle' ? <CopyIcon className="w-5 h-5" /> : <span className="text-xs font-bold text-green-400">Copiado!</span>}
-            </button>
           </div>
         </div>
       )}
